@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid()) @unique
+  username     String    @unique
+  name         String    @default("")
+  email        String    @unique
+  password     String
+  registeredAt DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  role         Role      @default(USER)
+  cart         Cart?
+  refreshTokens refreshToken[]
+  Comment      Comment[]
+}
+
+model refreshToken {
+  id       String   @id @default(uuid())
+  tokenHash String
+  userID   String
+  user     User     @relation(fields: [userID], references: [id])
+  createdAt DateTime @default(now())  
+}
+
+model Cart {
+  id     String     @id @default(uuid())
+  user   User       @relation(fields: [userID], references: [id],onDelete: Cascade)
+  userID String     @unique
+  items  CartItem[]
+}
+
+model Product {
+  id          String     @id @default(uuid()) 
+  name        String
+  src         String     @default("/no-image.webp")
+  rating      Int        @default(0)
+  price       Int        @default(0)
+  stock       Int        @default(1)
+  category    Category
+  description String?
+  cartItems   CartItem[]
+  Comment     Comment[]
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cart      Cart     @relation(fields: [cartID], references: [id])
+  cartID    String
+  product   Product  @relation(fields: [productID], references: [id])
+  productID String 
+  quantity  Int      @default(1)
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productID], references: [id], onDelete: Cascade)
+  productID String
+  user      User     @relation(fields: [userID], references: [id])
+  userID    String
+  content   String
+}
+
+enum Category {
+  TECH
+  FOOD
+  CAR
+  CLOTHING
+  HYGIENE
+}
+
+enum Role {
+  ADMIN
+  USER
+}
